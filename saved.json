@@ -1,0 +1,84 @@
+{
+    "RuleSets": {
+        "only errors": {
+            "Op": "contains",
+            "Data": "error"
+        },
+        "not familiar and ws": {
+            "Op": "not",
+            "Data": {
+                "Op": "or",
+                "Data": [
+                    {
+                        "Op": "contains",
+                        "Data": "31.13.208.95"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "80.7.167.209"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "ws ingest success"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "new bundle"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "new websocket connection"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "websocket closed"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "websocket read"
+                    }
+                ]
+            }
+        },
+        "not lux": {
+            "Op": "not",
+            "Data": {
+                "Op": "or",
+                "Data": [
+                    {
+                        "Op": "contains",
+                        "Data": "31.13.208.95"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "ws ingest success"
+                    },
+                    {
+                        "Op": "contains",
+                        "Data": "new bundle"
+                    }
+                ]
+            }
+        },
+        "lux": {
+            "Op": "or",
+            "Data": [
+                {
+                    "Op": "contains",
+                    "Data": "31.13.208.95"
+                },
+                {
+                    "Op": "contains",
+                    "Data": "ws ingest success"
+                },
+                {
+                    "Op": "contains",
+                    "Data": "new bundle"
+                }
+            ]
+        }
+    },
+    "LogDirs": {
+        "/home/blue/wt/replays/logs": {}
+    }
+}

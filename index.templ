@@ -1,0 +1,156 @@
+package main
+
+import "net/url"
+
+import "fmt"
+
+templ tPage(content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Log viewer</title>
+			<link rel="stylesheet" href="/static/style.css"/>
+			// <link rel="stylesheet" href="/static/charts.min.css"/>
+			// <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js" integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz" crossorigin="anonymous"></script>
+			<script src="/static/main.js"></script>
+		</head>
+		<body>
+			@content
+		</body>
+	</html>
+}
+
+templ tMessage(content string) {
+	<pre>
+		@templ.Raw(content)
+	</pre>
+}
+
+templ tIndex(saved SavedStuff) {
+	<div class="margin-center">
+		<table class="table-row-borders" style="text-align: left;">
+			<thead>
+				<tr>
+					<th>log dir</th>
+					<th>rule sets</th>
+				</tr>
+			</thead>
+			<tbody>
+				for k, v := range saved.LogDirs {
+					<tr>
+						<td><a href={ "/view/" + url.PathEscape(k) }>{ k }</a></td>
+						<td>
+							<div>Global rules: ({ len(saved.RuleSets) })</div>
+							<div>
+								<table>
+									for k2, _ := range saved.RuleSets {
+										<tr>
+											<td><a href={ "/view/" + url.PathEscape(k) + "/" + url.PathEscape(k2) }>{ k2 }</a></td>
+											<td>{ "show stub" } rules</td>
+										</tr>
+									}
+								</table>
+							</div>
+							<div>Dir rules: ({ len(v) })</div>
+							<div>
+								<table>
+									for k2, _ := range v {
+										<tr>
+											<td><a href={ "/view/" + url.PathEscape(k) + "/" + url.PathEscape(k2) }>{ k2 }</a></td>
+											<td>{ "show stub" } rules</td>
+										</tr>
+									}
+								</table>
+							</div>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+func turlToView(dirName, ruleSetName string, limit, offset, step int) (ret string) {
+	ret = "/view/" + url.PathEscape(dirName)
+	if ruleSetName != "" {
+		ret += "/" + url.PathEscape(ruleSetName)
+	}
+	ret += fmt.Sprintf("?limit=%d&offset=%d&step=%d", limit, offset, step)
+	return
+}
+
+templ tViewPrevNext(dirName, ruleSetName string, limit, offset, step int) {
+	if offset > 0 {
+		<span><a href={ turlToView(dirName, ruleSetName, limit, max(0, offset-step), step) }>prev</a></span>
+	} else {
+		<span>prev</span>
+	}
+	<span><a href={ turlToView(dirName, ruleSetName, limit, offset+step, step) }>next</a></span>
+}
+
+templ tView(dirName, ruleSetName string, gloablRules, dirRules []string, limit, offset, step int, messages []map[string]any) {
+	<div class="margin-center">
+		<div>Dir: <span><a href={ turlToView(dirName, "", limit, 0, step) }>{ dirName }</a></span> RuleSet: { ruleSetName }</div>
+		<div>
+			Dir rules:
+			for _, v := range dirRules {
+				<span><a href={ turlToView(dirName, v, limit, 0, step) }>{ v }</a></span> { " " }
+			}
+		</div>
+		<div>
+			Global rules:
+			for _, v := range gloablRules {
+				<span><a href={ turlToView(dirName, v, limit, 0, step) }>{ v }</a></span> { " " }
+			}
+		</div>
+		<div>
+			Limit: { limit }
+			<span><a href={ turlToView(dirName, ruleSetName, 25, offset, step) }>25</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, 30, offset, step) }>30</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, 50, offset, step) }>50</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, 100, offset, step) }>100</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, 500, offset, step) }>500</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, 1000, offset, step) }>1000</a></span>
+			Offset: { offset }
+			{ " " }
+			@tViewPrevNext(dirName, ruleSetName, limit, offset, step)
+			{ " " }
+			Step: { step }
+			<span><a href={ turlToView(dirName, ruleSetName, limit, offset, 25) }>25</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, limit, offset, 30) }>30</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, limit, offset, 50) }>50</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, limit, offset, 100) }>100</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, limit, offset, 500) }>500</a></span>
+			<span><a href={ turlToView(dirName, ruleSetName, limit, offset, 1000) }>1000</a></span>
+		</div>
+	</div>
+	<div>
+		<table class="margin-center table-row-borders" style="text-align: left;">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>when</th>
+					<th>level</th>
+					<th>msg</th>
+					<th>params</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, msg := range messages {
+					<tr>
+						<td>{ offset + i }</td>
+						<td><pre>{ msg["time"].(string) }</pre></td>
+						<td><pre>{ msg["level"].(string) }</pre></td>
+						<td><pre>{ msg["message"].(string) }</pre></td>
+						<td><pre>{ marshalOtherParams(msg) }</pre></td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+	<div>
+		@tViewPrevNext(dirName, ruleSetName, limit, offset, step)
+	</div>
+}
