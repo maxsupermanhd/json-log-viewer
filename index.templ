@@ -90,6 +90,21 @@ templ tViewPrevNext(dirName, ruleSetName string, limit, offset, step int) {
 	<span><a href={ turlToView(dirName, ruleSetName, limit, offset+step, step) }>next</a></span>
 }
 
+func mapVstr(m map[string]any, k string) string {
+	if m == nil {
+		return "!!nilmap!!"
+	}
+	v, ok := m[k]
+	if !ok {
+		return "!!nokey!!"
+	}
+	s, ok := v.(string)
+	if !ok {
+		return "!!notstr!!"
+	}
+	return s
+}
+
 templ tView(dirName, ruleSetName string, gloablRules, dirRules []string, limit, offset, step int, messages []map[string]any) {
 	<div class="margin-center">
 		<div>Dir: <span><a href={ turlToView(dirName, "", limit, 0, step) }>{ dirName }</a></span> RuleSet: { ruleSetName }</div>
@@ -141,9 +156,9 @@ templ tView(dirName, ruleSetName string, gloablRules, dirRules []string, limit, 
 				for i, msg := range messages {
 					<tr>
 						<td>{ offset + i }</td>
-						<td><pre>{ msg["time"].(string) }</pre></td>
-						<td><pre>{ msg["level"].(string) }</pre></td>
-						<td><pre>{ msg["message"].(string) }</pre></td>
+						<td><pre>{ mapVstr(msg, "time") }</pre></td>
+						<td><pre>{ mapVstr(msg, "level") }</pre></td>
+						<td><pre>{ mapVstr(msg, "message") }</pre></td>
 						<td><pre>{ marshalOtherParams(msg) }</pre></td>
 					</tr>
 				}
